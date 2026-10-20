@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fastmcp-linux-desktop"
+version = "0.1.0"
+description = "FastMCP Model Context Protocol (MCP) Server for Linux Desktops (Hyprland, Wayland, PipeWire, Systemd)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "apravint", email = "apravint@users.noreply.github.com" },
+]
+keywords = ["mcp", "fastmcp", "model-context-protocol", "hyprland", "wayland", "linux", "desktop-automation", "pipewire", "systemd"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "fastmcp>=2.0.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+]
+ai = [
+    "context-condenser>=0.1.0",
+    "agent-hindsight>=0.1.0",
+]
+
+[project.scripts]
+fastmcp-linux-desktop = "fastmcp_linux_desktop.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fastmcp_linux_desktop"]
