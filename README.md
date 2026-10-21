@@ -48,7 +48,18 @@ pip install fastmcp-linux-desktop
 
 ### 2. Connect to Claude Desktop / Cursor / Antigravity
 
-Add to your `claude_desktop_config.json` or MCP settings:
+Generate configuration or install automatically with one command:
+
+```bash
+# Print configuration JSON
+fastmcp-linux-desktop config --claude
+fastmcp-linux-desktop config --cursor --sse
+
+# Automatically merge into client config file with safe timestamped backup:
+fastmcp-linux-desktop config --claude --write
+```
+
+Manual configuration block for `claude_desktop_config.json` or `.cursor/mcp.json`:
 
 ```json
 {
