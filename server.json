@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.apravint/fastmcp-linux-desktop",
+  "title": "FastMCP Linux Desktop",
+  "description": "FastMCP server for Linux desktops: Wayland and Hyprland window/workspace management, PipeWire/WirePlumber audio controls, systemd service health diagnostics, and desktop automation.",
+  "repository": {
+    "url": "https://github.com/apravint/fastmcp-linux-desktop",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "fastmcp-linux-desktop",
+      "version": "0.1.0",
+      "runtimeHint": "python",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

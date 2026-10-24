@@ -4,6 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/python-3.10+-green.svg)](https://python.org)
 [![FastMCP](https://img.shields.io/badge/FastMCP-2.0+-purple.svg)](https://github.com/jlowin/fastmcp)
+[![Glama Score](https://glama.ai/mcp/servers/apravint/fastmcp-linux-desktop/badges/score.svg)](https://glama.ai/mcp/servers/apravint/fastmcp-linux-desktop)
 
 > **High-performance FastMCP Server empowering AI Agents (Claude Desktop, Cursor, Antigravity, OpenRig) with native Linux desktop and compositor control.**  
 > Provides deep primitives for Hyprland/Wayland window management, PipeWire audio routing, systemd health diagnosis and self-healing, notifications, and long-term agent memory.

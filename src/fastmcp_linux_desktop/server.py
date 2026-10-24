@@ -10,6 +10,7 @@ import json
 import shutil
 import subprocess
 from typing import Optional, Dict, Any, List
+from pydantic import Field
 from fastmcp import FastMCP
 
 def create_server(name: str = "linux-desktop") -> FastMCP:
@@ -24,7 +25,15 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
 
     @server.tool()
     def get_windows() -> str:
-        """Get all active desktop windows, workspaces, geometry, and classes in Hyprland/Wayland."""
+        """Enumerate all active desktop windows across workspaces in Hyprland and Wayland compositors.
+
+        Returns a JSON array of client objects containing address, title, window class,
+        mapped workspace name, and focus history ID.
+        
+        Usage Guidelines:
+        - Call this to inspect running applications, verify open windows, or find window addresses.
+        - Read-only query; does not alter window positions, focus, or desktop state.
+        """
         if not shutil.which("hyprctl"):
             return "hyprctl not found. Ensure Hyprland is installed and running."
         try:
@@ -45,8 +54,16 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
             return f"Error querying windows: {e}"
 
     @server.tool()
-    def focus_window(target: str) -> str:
-        """Focus a window by class name, title substring, or address (e.g. 'Alacritty', 'Chrome', '0x1234abcd')."""
+    def focus_window(
+        target: str = Field(description="Window identifier: exact class name, title substring, or hexadecimal address (e.g. 'Alacritty', 'Chrome', '0x1234abcd')")
+    ) -> str:
+        """Bring a specific application window to focus and foreground by class, title, or address.
+
+        Usage Guidelines:
+        - Use when an agent needs to switch user focus to a specific window or workspace.
+        - Case-insensitive substring matching is applied against class names and window titles.
+        - Modifies active desktop focus state immediately.
+        """
         if not shutil.which("hyprctl"):
             return "hyprctl not found."
         try:
@@ -68,8 +85,17 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
             return f"Error focusing window: {e}"
 
     @server.tool()
-    def dispatch_hyprland(dispatcher: str, args: str = "") -> str:
-        """Execute any Hyprland dispatch command (e.g. workspace 2, togglefloating, killactive)."""
+    def dispatch_hyprland(
+        dispatcher: str = Field(description="Hyprland dispatcher command name (e.g. 'workspace', 'togglefloating', 'fullscreen', 'killactive')"),
+        args: str = Field(default="", description="Optional arguments passed to the dispatcher (e.g. '1', 'exact:2', '0')")
+    ) -> str:
+        """Execute any low-level Hyprland dispatch instruction.
+
+        Usage Guidelines:
+        - Use for advanced window manipulations, tiling layout toggles, or custom Hyprland operations.
+        - Directly invokes 'hyprctl dispatch <dispatcher> <args>'.
+        - Modifies window manager layout or application state.
+        """
         if not shutil.which("hyprctl"):
             return "hyprctl not found."
         try:
@@ -82,8 +108,15 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
             return f"Dispatch error: {e}"
 
     @server.tool()
-    def switch_workspace(workspace_id: str) -> str:
-        """Switch to a specific workspace (e.g. '1', '2', 'name:code')."""
+    def switch_workspace(
+        workspace_id: str = Field(description="Target workspace identifier (e.g. '1', '2', 'name:code', 'm+1')")
+    ) -> str:
+        """Switch active desktop workspace in Hyprland.
+
+        Usage Guidelines:
+        - Use to organize tasks across virtual desktop workspaces.
+        - Modifies current active workspace on the focused monitor.
+        """
         if not shutil.which("hyprctl"):
             return "hyprctl not found."
         try:
@@ -95,7 +128,12 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
 
     @server.tool()
     def get_monitors() -> str:
-        """List connected display monitors, resolutions, refresh rates, and active focus."""
+        """List connected display monitors, resolutions, scale factors, and refresh rates.
+
+        Usage Guidelines:
+        - Use to inspect display hardware topology, active workspace bindings, and screen geometry.
+        - Read-only query; returns JSON representation of connected Wayland displays.
+        """
         if not shutil.which("hyprctl"):
             return "hyprctl not found."
         try:
@@ -110,7 +148,12 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
 
     @server.tool()
     def get_audio_status() -> str:
-        """Get active default audio sink, volume level, and mute status."""
+        """Query active default audio output sink, volume percentage, and mute state.
+
+        Usage Guidelines:
+        - Use before making volume adjustments to verify current sink and volume levels.
+        - Read-only query; uses pactl / PipeWire pulse bridge.
+        """
         if not shutil.which("pactl"):
             return "pactl not found. PulseAudio or PipeWire-pulse is required."
         try:
@@ -122,8 +165,15 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
             return f"Audio error: {e}"
 
     @server.tool()
-    def set_volume(percentage: int) -> str:
-        """Set output volume level as percentage (0-100%)."""
+    def set_volume(
+        percentage: int = Field(description="Target volume level as integer percentage (0 to 150)", ge=0, le=150)
+    ) -> str:
+        """Set default audio output volume to a specific percentage.
+
+        Usage Guidelines:
+        - Values are safely clamped between 0% (silence) and 150% (boosted limit).
+        - Modifies hardware/software mixer output level immediately.
+        """
         if not shutil.which("pactl"):
             return "pactl not found."
         try:
@@ -135,7 +185,12 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
 
     @server.tool()
     def toggle_audio_sink() -> str:
-        """Toggle audio output between available audio sinks."""
+        """Cycle audio output between available physical and virtual audio sinks.
+
+        Usage Guidelines:
+        - Use to switch between speakers, headphones, HDMI outputs, or USB DACs.
+        - Modifies active default audio routing immediately.
+        """
         if shutil.which("iram-audio-toggle"):
             try:
                 res = subprocess.run(["iram-audio-toggle"], capture_output=True, text=True)
@@ -163,7 +218,12 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
 
     @server.tool()
     def get_system_health() -> str:
-        """Diagnose failed systemd units, PipeWire audio status, system memory, and load averages."""
+        """Diagnose failed systemd units, PipeWire audio status, system memory, and load averages.
+
+        Usage Guidelines:
+        - Call when diagnosing desktop instability, stalled services, or resource constraints.
+        - Read-only diagnostics across system and user systemd instances.
+        """
         try:
             failed_system = subprocess.check_output(["systemctl", "--failed", "--no-legend"], text=True).strip()
             failed_user = subprocess.check_output(["systemctl", "--user", "--failed", "--no-legend"], text=True).strip()
@@ -181,10 +241,14 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
 
     @server.tool()
     def heal_system() -> str:
-        """Automatically reset and restart failed user units, verify PipeWire, and refresh notifications."""
+        """Automatically reset and restart failed user units and verify PipeWire/WirePlumber audio stack.
+
+        Usage Guidelines:
+        - Use when services or desktop audio have entered a degraded state.
+        - Modifies service state by executing 'systemctl --user reset-failed' and restarting affected units.
+        """
         actions = []
         try:
-            # Check user units
             out = subprocess.run(["systemctl", "--user", "--failed", "--no-legend"], capture_output=True, text=True)
             for line in out.stdout.splitlines():
                 parts = line.split()
@@ -194,7 +258,6 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
                     subprocess.run(["systemctl", "--user", "restart", unit])
                     actions.append(f"Restarted failed user unit: {unit}")
 
-            # Check audio
             if shutil.which("pactl"):
                 audio_test = subprocess.run(["pactl", "info"], capture_output=True, text=True)
                 if audio_test.returncode != 0:
@@ -209,7 +272,12 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
 
     @server.tool()
     def get_resource_usage() -> str:
-        """Get CPU, disk, memory, and top process telemetry."""
+        """Get CPU utilization, root filesystem disk usage, memory pressure, and top running processes.
+
+        Usage Guidelines:
+        - Use to inspect current system performance or locate runaway processes.
+        - Read-only telemetry report.
+        """
         try:
             df = subprocess.check_output(["df", "-h", "/"], text=True).strip()
             top = subprocess.check_output(["ps", "-eo", "pid,user,%cpu,%mem,comm", "--sort=-%cpu"], text=True)
@@ -219,8 +287,17 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
             return f"Resource check error: {e}"
 
     @server.tool()
-    def desktop_notify(title: str, message: str, urgency: str = "normal") -> str:
-        """Display a native desktop notification via notify-send."""
+    def desktop_notify(
+        title: str = Field(description="Header title text of the notification banner"),
+        message: str = Field(description="Body message text explaining the event or status update"),
+        urgency: str = Field(default="normal", description="Notification urgency level: 'low', 'normal', or 'critical'")
+    ) -> str:
+        """Display a native desktop banner notification via notify-send.
+
+        Usage Guidelines:
+        - Use to alert the human user upon completing long tasks or encountering critical events.
+        - Modifies desktop notification tray state non-destructively.
+        """
         if not shutil.which("notify-send"):
             return "notify-send not installed."
         try:
@@ -230,8 +307,15 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
             return f"Notification error: {e}"
 
     @server.tool()
-    def take_screenshot(output_path: str = "") -> str:
-        """Capture desktop screenshot using grim/slurp on Wayland."""
+    def take_screenshot(
+        output_path: str = Field(default="", description="Destination file path for the screenshot image (defaults to /tmp/screenshot_<pid>.png)")
+    ) -> str:
+        """Capture a desktop screenshot using grim on Wayland compositors.
+
+        Usage Guidelines:
+        - Use to visually inspect desktop rendering, UI elements, or window state.
+        - Saves an uncompressed PNG image file to local storage.
+        """
         if not shutil.which("grim"):
             return "grim not found. Install grim for Wayland screen capture."
         out = output_path or f"/tmp/screenshot_{os.getpid()}.png"
@@ -246,10 +330,17 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
     # =========================================================================
 
     @server.tool()
-    def condense_context(raw_text: str, query: str = "") -> str:
-        """Compress logs, diffs, and tool outputs using BM25 relevance ranking."""
+    def condense_context(
+        raw_text: str = Field(description="Source text, large log dump, terminal output, or diff to compress"),
+        query: str = Field(default="", description="Optional intent query to prioritize relevant sentences via BM25 ranking")
+    ) -> str:
+        """Compress large text payloads, command logs, and diffs using BM25 relevance ranking.
+
+        Usage Guidelines:
+        - Use before passing large terminal or log outputs into agent context to reduce token costs by up to 90%.
+        - Pure read-only text compression.
+        """
         try:
-            # Check for context_condenser python package or cli
             from context_condenser.engine import condense
             res = condense(raw_text, query)
             return res.get("condensed_text", raw_text)
@@ -263,8 +354,17 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
             return f"Error condensing context: {e}"
 
     @server.tool()
-    def memory_retain(fact: str, category: str = "general", importance: int = 5) -> str:
-        """Retain a critical fact into long-term agent memory."""
+    def memory_retain(
+        fact: str = Field(description="Statement of fact, user preference, architecture rule, or session note to remember"),
+        category: str = Field(default="general", description="Organizational category (e.g. 'project', 'preferences', 'workflow', 'general')"),
+        importance: int = Field(default=5, description="Significance rank from 1 (minor detail) to 10 (critical system rule)", ge=1, le=10)
+    ) -> str:
+        """Retain a key fact or preference into long-term agent episodic memory.
+
+        Usage Guidelines:
+        - Use to persist user preferences, configuration paths, or decisions across subsequent sessions.
+        - Persists knowledge into local memory database.
+        """
         try:
             from agent_hindsight.memory import AgentHindsightMemory
             mem = AgentHindsightMemory()
@@ -283,8 +383,17 @@ def create_server(name: str = "linux-desktop") -> FastMCP:
             return f"Error retaining memory: {e}"
 
     @server.tool()
-    def memory_recall(query: str = "", category: str = "", limit: int = 5) -> str:
-        """Recall relevant long-term memories ranked by BM25 and recency decay."""
+    def memory_recall(
+        query: str = Field(default="", description="Keyword or semantic concept to query in memory"),
+        category: str = Field(default="", description="Optional category filter (e.g. 'preferences', 'project')"),
+        limit: int = Field(default=5, description="Maximum number of memory items to return", ge=1, le=50)
+    ) -> str:
+        """Recall relevant long-term memories ranked by BM25 relevance and recency decay.
+
+        Usage Guidelines:
+        - Call at session start or before complex operations to retrieve relevant user instructions and rules.
+        - Read-only query against local memory store.
+        """
         try:
             from agent_hindsight.memory import AgentHindsightMemory
             mem = AgentHindsightMemory()
