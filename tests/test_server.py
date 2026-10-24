@@ -22,7 +22,7 @@ class TestFastMCPDesktop(unittest.TestCase):
                 "switch_workspace", "get_monitors", "get_audio_status",
                 "set_volume", "toggle_audio_sink", "get_system_health",
                 "heal_system", "get_resource_usage", "desktop_notify",
-                "condense_context", "memory_retain", "memory_recall"
+                "take_screenshot", "condense_context", "memory_retain", "memory_recall"
             ]
             for t in expected_tools:
                 self.assertIn(t, tool_names, f"Missing tool: {t}")
