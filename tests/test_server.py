@@ -1,8 +1,12 @@
 import asyncio
 import os
+import sys
 import json
 import tempfile
 import unittest
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
+
 from fastmcp_linux_desktop.server import create_server
 from fastmcp_linux_desktop.cli import generate_config, install_config
 
